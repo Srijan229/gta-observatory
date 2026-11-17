@@ -1,0 +1,6 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {cpu,memory,loadConfig,deltaTelemetry} from '../server/model.mjs';
+test('Kubernetes quantities normalize CPU and binary memory units',()=>{assert.equal(cpu('123456789n'),123.456789);assert.equal(cpu('2'),2000);assert.equal(memory('128Mi'),134217728);assert.equal(cpu(null),null);});
+test('Load controls reject out-of-range, fractional and missing values',()=>{assert.deepEqual(loadConfig({rps:20,concurrency:8,duration:60}),{rps:20,concurrency:8,duration:60});for(const input of [{rps:100,concurrency:1,duration:10},{rps:2,concurrency:13,duration:10},{rps:2,concurrency:2,duration:0},{rps:1.5,concurrency:2,duration:30},{}])assert.throws(()=>loadConfig(input));});
+test('Telemetry counters handle restarts and new replicas without negative rates',()=>{const point=(pod,start,n)=>({pod,startedAt:start,requests:n,errors:0,totalMs:n*3,histogram:[n,0,0,0,0,0,0,0,0]});assert.equal(deltaTelemetry(null,[],5),null);const metric=deltaTelemetry([point('a','1',20)],[point('a','1',30),point('b','2',100)],5);assert.equal(metric.rps,2);assert.equal(metric.meanMs,3);assert.equal(metric.p95UpperMs,5);assert.equal(deltaTelemetry([point('a','1',20)],[point('a','2',1)],5),null);});

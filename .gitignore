@@ -1,0 +1,13 @@
+.local/
+.env
+.env.*
+!.env.example
+node_modules/
+*.log
+*.dump
+*.sql
+*.tar
+*.zip
+*.key
+*.pem
+kubeconfig*
